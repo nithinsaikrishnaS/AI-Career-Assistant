@@ -61,9 +61,10 @@ def get_api_key(request: Request, api_key: str = Security(api_key_header)):
     # 2. Check Cookie Match
     cookie_key = request.cookies.get("session_auth_key")
     
-    # 3. Handle Special Case: Onboarding (Allow if it's the first time and they are on the profile route)
+    # 3. Handle Special Case: Onboarding (Allow if it's the first time)
     # This prevents users from being 'locked out' if their browser blocks initial cookies.
-    if request.url.path == "/profile" and request.method == "POST":
+    onboarding_routes = ["/profile", "/upload-resume"]
+    if request.url.path in onboarding_routes and request.method == "POST":
          return "onboarding_bypass"
 
     # Production Debugging (Requirement 5)
