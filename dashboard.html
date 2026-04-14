@@ -194,11 +194,18 @@
                 return jobs.filter(j => getFilterCategory(j.source) === activeFilter);
             };
 
+            // Safe JSON parser — handles empty bodies from Render cold starts
+            const safeJson = async (res) => {
+                const text = await res.text();
+                return text ? JSON.parse(text) : {};
+            };
+
             const fetchData = async () => {
                 try {
                     const healthRes = await fetch('/health', { credentials: 'include' });
-                    const healthData = await healthRes.json();
-                    setHealth(healthData.metrics);
+                    if (!healthRes.ok) { setIsLive(false); setLoading(false); return; }
+                    const healthData = await safeJson(healthRes);
+                    setHealth(healthData.metrics || {});
                     setIsLive(true);
                     
                     if (!healthData?.metrics?.profile_online) {
@@ -209,7 +216,8 @@
                     setProfileReady(true);
                     
                     const res = await fetch(`/jobs?t=${Date.now()}`, { credentials: 'include' });
-                    const json = await res.json();
+                    if (!res.ok) { setLoading(false); return; }
+                    const json = await safeJson(res);
                     
                     // Safety: Ensure we always have arrays
                     const safeData = {
@@ -218,7 +226,7 @@
                         metrics: json.metrics || {}
                     };
                     
-                    if (json.is_rescoring || json.is_scanning || healthData.metrics.system_status !== 'Idle') {
+                    if (json.is_rescoring || json.is_scanning || (healthData?.metrics?.system_status && healthData.metrics.system_status !== 'Idle')) {
                         setScanning(true);
                         setTimeout(fetchData, 3000);
                     } else {
@@ -235,20 +243,12 @@
 
             const triggerScan = async () => {
                 setScanning(true);
-                // Helper to extract session CSRF token (Requirement: Production Security)
-                const getCookie = (name) => {
-                    const value = `; ${document.cookie}`;
-                    const parts = value.split(`; ${name}=`);
-                    if (parts.length === 2) return parts.pop().split(';').shift();
-                };
-                const csrfToken = getCookie('session_auth_key');
-
-                await fetch('/trigger-scan', { 
-                    method: 'POST', 
-                    credentials: 'include',
-                    headers: { 'X-CSRF-TOKEN': csrfToken }
-                });
-                // We now rely on fetchData's recursive polling logic
+                try {
+                    await fetch('/trigger-scan', { 
+                        method: 'POST', 
+                        credentials: 'include'
+                    });
+                } catch (e) { console.error("Trigger scan failed:", e); }
                 setTimeout(fetchData, 2000);
             };
 
