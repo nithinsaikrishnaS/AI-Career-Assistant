@@ -32,8 +32,10 @@ document.addEventListener('DOMContentLoaded', () => {
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        const csrfToken = getCookie('session_auth_key');
-        console.log("Request started with CSRF context:", !!csrfToken);
+        const authToken = getCookie('session_auth_key');
+        const csrfToken = getCookie('session_auth_key'); // They share the same secret for simplicity
+        
+        console.log("Request started. Auth context:", !!authToken);
         
         // Reset UI
         statusDiv.textContent = 'Processing...';
@@ -62,14 +64,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const timeoutId = setTimeout(() => controller.abort(), 15000);
 
         try {
-            // 1. POST Resume (Extract skills without resetting profile)
+            // 1. POST Resume
             if (resumeFile && resumeFile.size > 0) {
                 const resumeFormData = new FormData();
                 resumeFormData.append('file', resumeFile);
 
                 const resumeRes = await fetch(`${API_BASE}/upload-resume`, {
                     method: 'POST',
-                    headers: { 'X-CSRF-TOKEN': csrfToken },
+                    headers: { 
+                        'X-CSRF-TOKEN': csrfToken,
+                        'X-API-KEY': authToken 
+                    },
                     body: resumeFormData,
                     credentials: 'include',
                     signal: controller.signal
@@ -91,7 +96,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken
+                    'X-CSRF-TOKEN': csrfToken,
+                    'X-API-KEY': authToken 
                 },
                 body: JSON.stringify(preferences),
                 credentials: 'include',
@@ -103,10 +109,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error(typeof msg === 'object' ? JSON.stringify(msg) : msg);
             }
 
-            // 3. POST Job Matching (Trigger automated discovery)
+            // 3. POST Job Matching
             const scanRes = await fetch(`${API_BASE}/trigger-scan`, {
                 method: 'POST',
-                headers: { 'X-CSRF-TOKEN': csrfToken },
+                headers: { 
+                    'X-CSRF-TOKEN': csrfToken,
+                    'X-API-KEY': authToken 
+                },
                 credentials: 'include',
                 signal: controller.signal
             });

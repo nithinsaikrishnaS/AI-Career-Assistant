@@ -249,8 +249,9 @@ def get_secure_page(filename: str, response: Response):
         key="session_auth_key", 
         value=API_KEY, 
         httponly=False, 
+        secure=True,     # REQUIRED for Render HTTPS
         samesite="lax",
-        path="/" # Ensure cookie is valid for all API routes (Fix 1)
+        path="/" 
     )
     
     with open(filename, "r") as f:
