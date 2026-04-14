@@ -193,6 +193,27 @@ def csrf_check(request: Request):
 @app.on_event("startup")
 def startup_event():
     """Startup initialization: Scheduler + Telegram Feedback Poller."""
+    
+    # 🌱 PROFILE SEED: On Render, filesystem resets on every deploy.
+    # Seed profile from env vars so automation starts immediately after redeploy.
+    from utils.data_manager import get_user_data, save_user_data
+    if not get_user_data():
+        seed_role = os.getenv("DEFAULT_ROLE", "")
+        seed_skills_raw = os.getenv("DEFAULT_SKILLS", "")
+        seed_location = os.getenv("DEFAULT_LOCATION", "Remote")
+        seed_domain = os.getenv("DEFAULT_DOMAIN", "IT")
+        if seed_role and seed_skills_raw:
+            seed_skills = [s.strip() for s in seed_skills_raw.split(",") if s.strip()]
+            save_user_data({
+                "role": seed_role,
+                "location": seed_location,
+                "domain": seed_domain,
+                "skills": seed_skills
+            })
+            logger.info(f"🌱 [SEED] Profile auto-restored from env vars: {seed_role}")
+        else:
+            logger.warning("⚠️ No profile seed env vars found (DEFAULT_ROLE, DEFAULT_SKILLS). Set these in Render.")
+    
     start_scheduler()
     
     # Start Telegram Interaction Thread (Long Polling)
