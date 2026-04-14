@@ -133,12 +133,19 @@ class UserDetailedProfile(BaseModel):
     role: str = Field(..., min_length=2, max_length=100)
     location: str = Field(..., min_length=2, max_length=100)
     domain: str = Field(..., min_length=2, max_length=50)
+    experience: Optional[str] = Field("Fresher", max_length=50)
+    job_type: Optional[str] = Field("Full-time", max_length=50)
+    preferred_tech: Optional[str] = Field("", max_length=200)
+    salary_range: Optional[str] = Field("Not Specified", max_length=100)
+    availability: Optional[str] = Field("Immediate", max_length=50)
+    work_mode: Optional[str] = Field("Remote", max_length=50)
+    company_type: Optional[str] = Field("Any", max_length=100)
+    notifications: bool = Field(True)
     skills: List[str] = Field(default_factory=list, max_items=30)
     
     @validator('skills', pre=True)
     def sanitize_skills(cls, v):
         if not isinstance(v, list): return []
-        # Strip whitespace, filter empties, remove duplicates, cap at 30
         clean = list(set([s.strip() for s in v if s and s.strip()]))[:30]
         return sorted(clean)
 

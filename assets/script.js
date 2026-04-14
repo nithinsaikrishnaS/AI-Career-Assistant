@@ -76,7 +76,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 
                 const resumeData = await resumeRes.json();
-                if (!resumeRes.ok) throw new Error(resumeData.detail || resumeData.message || 'Failed to analyze resume.');
+                if (!resumeRes.ok) {
+                    const msg = resumeData.detail || resumeData.message || 'Failed to analyze resume.';
+                    throw new Error(typeof msg === 'object' ? JSON.stringify(msg) : msg);
+                }
                 
                 if (resumeData.profile && resumeData.profile.skills) {
                     preferences.skills = resumeData.profile.skills;
@@ -95,7 +98,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 signal: controller.signal
             });
             const prefData = await prefRes.json();
-            if (!prefRes.ok) throw new Error(prefData.message || prefData.detail || 'Failed to save profile preferences.');
+            if (!prefRes.ok) {
+                const msg = prefData.detail || prefData.message || 'Failed to save profile preferences.';
+                throw new Error(typeof msg === 'object' ? JSON.stringify(msg) : msg);
+            }
 
             // 3. POST Job Matching (Trigger automated discovery)
             const scanRes = await fetch(`${API_BASE}/trigger-scan`, {
@@ -115,12 +121,26 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 1000);
             
         } catch (error) {
-            // Fix frontend: Handle API response correctly
+            console.error("Critical submission failure:", error);
+            
+            let finalMsg = "Unknown Error";
+            
             if (error.name === 'AbortError') {
-                statusDiv.textContent = 'Error: Request timed out. Please try again.';
+                finalMsg = "Timeout: The server is taking too long. Try refreshing.";
+            } else if (error instanceof Error) {
+                finalMsg = error.message;
+            } else if (typeof error === 'object') {
+                finalMsg = JSON.stringify(error);
             } else {
-                statusDiv.textContent = 'Error: ' + error.message;
+                finalMsg = String(error);
             }
+
+            // Final safety check for [object Object]
+            if (finalMsg === "[object Object]") {
+                finalMsg = "Connection failed or validation error. Check console.";
+            }
+
+            statusDiv.textContent = 'Error: ' + finalMsg;
             statusDiv.className = 'status error';
         } finally {
             clearTimeout(timeoutId);
@@ -128,7 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Stop loading state (Requirement 3)
             if (typeof window.setLoading === 'function') window.setLoading(false);
             
-            console.log("Request ended"); // Requirement 5
+            console.log("Request ended"); 
         }
     });
 });
