@@ -61,10 +61,9 @@ def get_api_key(request: Request, api_key: str = Security(api_key_header)):
     # 2. Check Cookie Match
     cookie_key = request.cookies.get("session_auth_key")
     
-    # 3. Handle Special Case: Onboarding (Allow if it's the first time)
+    # 3. Handle Special Case: Onboarding (Allow if it's the first time and they are on the profile route)
     # This prevents users from being 'locked out' if their browser blocks initial cookies.
-    onboarding_routes = ["/profile", "/upload-resume"]
-    if request.url.path in onboarding_routes and request.method == "POST":
+    if request.url.path == "/profile" and request.method == "POST":
          return "onboarding_bypass"
 
     # Production Debugging (Requirement 5)
@@ -176,6 +175,12 @@ def csrf_check(request: Request):
     if request.method == "POST":
         csrf_header = request.headers.get("X-CSRF-TOKEN")
         csrf_cookie = request.cookies.get("session_auth_key")
+        
+        # 10/10 Reliability: Allow CSRF bypass for initial onboarding 
+        # since the cookie might not be stored yet on HTTPS/Render.
+        if request.url.path == "/profile":
+            return
+
         if not csrf_header or csrf_header != csrf_cookie:
             logger.warning(f"🛡️ [SECURITY] CSRF Blocked: {request.url.path}")
             raise HTTPException(status_code=403, detail="CSRF Validation Failed")
