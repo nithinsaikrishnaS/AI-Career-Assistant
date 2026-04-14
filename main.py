@@ -64,10 +64,10 @@ def get_api_key(request: Request, api_key: str = Security(api_key_header)):
     # 2. Check Cookie Match
     cookie_key = request.cookies.get("session_auth_key")
     
-    # 3. Handle Special Case: Onboarding (Allow if it's the first time and they are on the profile route)
-    # Match /profile, /profile/, or /PROFILE to prevent path-related blocks.
-    normalized_path = request.url.path.strip("/")
-    if normalized_path.lower() == "profile" and request.method == "POST":
+    # 3. Handle Special Case: Onboarding (Allow if it's the first time)
+    # Match /profile and /upload-resume to prevent path-related blocks during onboarding.
+    normalized_path = request.url.path.strip("/").lower()
+    if normalized_path in ["profile", "upload-resume"] and request.method == "POST":
          return "onboarding_bypass"
 
     # Production Debugging (Requirement 5)
@@ -182,7 +182,8 @@ def csrf_check(request: Request):
         
         # 10/10 Reliability: Allow CSRF bypass for initial onboarding 
         # since the cookie might not be stored yet on HTTPS/Render.
-        if request.url.path == "/profile":
+        normalized_path = request.url.path.strip("/").lower()
+        if normalized_path in ["profile", "upload-resume"]:
             return
 
         if not csrf_header or csrf_header != csrf_cookie:
