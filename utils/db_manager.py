@@ -93,6 +93,14 @@ def init_db():
     )
     """)
     
+    # 7. Settings Table (for last_run_time, etc.)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS settings (
+        key TEXT PRIMARY KEY,
+        value TEXT
+    )
+    """)
+
     # 8. Production Indices (Requirement 5: Scalability)
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_jobs_score ON jobs(score)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_jobs_discovery ON jobs(discovery_date)")
