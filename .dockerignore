@@ -1,0 +1,12 @@
+.env
+.env.local
+.git
+.vscode
+data/*.db
+data/*.db-journal
+data/*.db-wal
+server.log*
+*.json
+tests/
+__pycache__/
+.DS_Store

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile | AI Job Aggregator Pro</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #050505;
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+        }
+        .input-glass {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+        .input-glass:focus {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.3);
+            outline: none;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
+        }
+        .btn-premium {
+            background: linear-gradient(135deg, #ffffff 0%, #a0a0a0 100%);
+            color: #000;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .btn-premium:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(255, 255, 255, 0.15);
+        }
+        .tag {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 4px 12px;
+            border-radius: 100px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+        }
+        .success-toast {
+            animation: slideUp 0.5s ease forwards;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const ProfilePage = () => {
+            const [profile, setProfile] = useState({
+                role: "",
+                location: "",
+                domain: "",
+                skills: []
+            });
+            const [newSkill, setNewSkill] = useState("");
+            const [loading, setLoading] = useState(true);
+            const [saving, setSaving] = useState(false);
+            const [showSuccess, setShowSuccess] = useState(false);
+
+            useEffect(() => {
+                fetchProfile();
+                // Initialize static icons once
+                setTimeout(() => typeof lucide !== 'undefined' && lucide.createIcons(), 500);
+            }, []);
+
+            const fetchProfile = async () => {
+                try {
+                    const res = await fetch('/profile', {
+                        credentials: 'include'
+                    });
+                    const json = await res.json();
+                    const data = json.data;
+                    if (data && typeof data === 'object') {
+                        setProfile({
+                            role: data.role || "",
+                            location: data.location || "",
+                            domain: data.domain || "",
+                            skills: data.skills || []
+                        });
+                    }
+                    setLoading(false);
+                } catch (err) {
+                    console.error("Failed to fetch profile", err);
+                    setLoading(false);
+                }
+            };
+
+            const handleSave = async (e) => {
+                if (e) e.preventDefault();
+                setSaving(true);
+                
+                // Helper to extract session CSRF token
+                const getCookie = (name) => {
+                    const value = `; ${document.cookie}`;
+                    const parts = value.split(`; ${name}=`);
+                    if (parts.length === 2) return parts.pop().split(';').shift();
+                };
+                const csrfToken = getCookie('session_auth_key');
+                
+                try {
+                    const res = await fetch('/profile', {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify(profile)
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                        setShowSuccess(true);
+                        setTimeout(() => setShowSuccess(false), 3000);
+                    } else {
+                        alert("Error: " + (data.message || data.detail || "Server error"));
+                    }
+                } catch (err) {
+                    console.error("Save failure:", err);
+                    alert("System error: Could not connect to profile service.");
+                } finally {
+                    setSaving(false);
+                }
+            };
+
+            const addSkill = (e) => {
+                if (e.key === 'Enter' && newSkill.trim()) {
+                    setProfile({ ...profile, skills: [...new Set([...profile.skills, newSkill.trim()])] });
+                    setNewSkill("");
+                }
+            };
+
+            const removeSkill = (skillToRemove) => {
+                setProfile({ ...profile, skills: profile.skills.filter(s => s !== skillToRemove) });
+            };
+
+            if (loading) return (
+                <div className="flex items-center justify-center h-screen">
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-white"></div>
+                </div>
+            );
+
+            return (
+                <div className="min-h-screen p-6 md:p-12 max-w-4xl mx-auto">
+                    {/* Header */}
+                    <header className="flex justify-between items-center mb-12">
+                        <div>
+                            <h1 className="text-4xl font-bold tracking-tight mb-2">My Profile</h1>
+                            <p className="text-gray-400">Manage your target roles and discovery parameters.</p>
+                        </div>
+                        <a href="/dashboard.html" className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
+                            <i data-lucide="arrow-left" className="w-5 h-5"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </header>
+
+                    <div className="grid gap-8">
+                        {/* Target Role Section */}
+                        <section className="glass p-8">
+                            <div className="flex items-center gap-3 mb-6">
+                                <i data-lucide="briefcase" className="w-6 h-6 text-gray-400"></i>
+                                <h2 className="text-xl font-semibold">Target Parameters</h2>
+                            </div>
+                            
+                            <div className="grid md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-sm text-gray-400 mb-2">Desired Job Role</label>
+                                    <input 
+                                        type="text" 
+                                        value={profile.role}
+                                        onChange={(e) => setProfile({...profile, role: e.target.value})}
+                                        className="w-full p-3 input-glass text-white"
+                                        placeholder="e.g. Software Developer"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-gray-400 mb-2">Preferred Location</label>
+                                    <input 
+                                        type="text" 
+                                        value={profile.location}
+                                        onChange={(e) => setProfile({...profile, location: e.target.value})}
+                                        className="w-full p-3 input-glass text-white"
+                                        placeholder="e.g. Remote or Bengaluru"
+                                    />
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label className="block text-sm text-gray-400 mb-2">Industry / Domain</label>
+                                    <input 
+                                        type="text" 
+                                        value={profile.domain}
+                                        onChange={(e) => setProfile({...profile, domain: e.target.value})}
+                                        className="w-full p-3 input-glass text-white"
+                                        placeholder="e.g. Fintech, E-commerce, AI"
+                                    />
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* Skills Section */}
+                        <section className="glass p-8">
+                            <div className="flex items-center gap-3 mb-6">
+                                <i data-lucide="zap" className="w-6 h-6 text-gray-400"></i>
+                                <h2 className="text-xl font-semibold">Technical Expertise</h2>
+                            </div>
+                            
+                            <p className="text-sm text-gray-400 mb-4">Add or remove skills extracted from your resume to tune your discovery score.</p>
+                            
+                            <input 
+                                type="text" 
+                                value={newSkill}
+                                onChange={(e) => setNewSkill(e.target.value)}
+                                onKeyDown={addSkill}
+                                className="w-full p-3 input-glass text-white mb-6"
+                                placeholder="Type a skill and press Enter (e.g. Python, Docker)"
+                            />
+
+                            <div className="flex flex-wrap gap-3">
+                                {profile.skills.map((skill, index) => (
+                                    <div key={index} className="tag group">
+                                        <span>{skill}</span>
+                                        <button 
+                                            onClick={() => removeSkill(skill)}
+                                            className="text-gray-500 hover:text-white transition-colors"
+                                        >
+                                            <i data-lucide="x" className="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+
+                        {/* Save Trigger */}
+                        <div className="flex justify-end pt-4">
+                            <button 
+                                type="button"
+                                onClick={handleSave}
+                                disabled={saving}
+                                className="btn-premium px-10 py-4 flex items-center gap-3 rounded-2xl"
+                            >
+                                {saving ? (
+                                    <div className="animate-spin h-5 w-5 border-2 border-black border-t-transparent rounded-full"></div>
+                                ) : (
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="w-5 h-5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                                )}
+                                <span>{saving ? "Saving..." : "Save Profile"}</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Success Notification */}
+                    {showSuccess && (
+                        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 success-toast">
+                            <div className="bg-white text-black px-6 py-3 rounded-full flex items-center gap-3 shadow-2xl">
+                                <span className="flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="w-5 h-5 text-green-600"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                                </span>
+                                <span className="font-semibold">Profile Persisted Successfully</span>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<ProfilePage />);
+    </script>
+</body>
+</html>

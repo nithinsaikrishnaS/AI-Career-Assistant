@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Onboarding | Career Assistant</title>
+    <link rel="stylesheet" href="/assets/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="main-wrapper">
+        <div class="onboarding-card">
+            <header class="header">
+                <h1>Profile Setup</h1>
+                <p>Enter your details to start finding precision matches.</p>
+            </header>
+
+            <form id="onboardingForm" class="form">
+                <!-- Section 1: Basic Info -->
+                <div class="form-section">
+                    <h2 class="section-title">Basic Info</h2>
+                    <div class="field">
+                        <label for="role">Target Role</label>
+                        <input type="text" id="role" name="role" placeholder="e.g. Software Developer" required>
+                    </div>
+                    <div class="grid-2">
+                        <div class="field">
+                            <label for="location">Preferred Location</label>
+                            <input type="text" id="location" name="location" placeholder="e.g. Bangalore" required>
+                        </div>
+                        <div class="field">
+                            <label for="domain">Academic/Professional Domain</label>
+                            <select id="domain" name="domain" required>
+                                <option value="" disabled selected>Select domain</option>
+                                <option value="IT">IT</option>
+                                <option value="Core">Core</option>
+                                <option value="Finance">Finance</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Job Preferences -->
+                <div class="form-section">
+                    <h2 class="section-title">Job Preferences</h2>
+                    <div class="grid-2">
+                        <div class="field">
+                            <label for="job_type">Job Type</label>
+                            <select id="job_type" name="job_type">
+                                <option value="Full-time">Full-time</option>
+                                <option value="Internship">Internship</option>
+                                <option value="Contract">Contract</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="work_mode">Work Mode</label>
+                            <select id="work_mode" name="work_mode">
+                                <option value="Remote">Remote</option>
+                                <option value="On-site">On-site</option>
+                                <option value="Hybrid">Hybrid</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label for="experience">Experience Level</label>
+                        <input type="text" id="experience" name="experience" placeholder="e.g. Fresher / 1 Year">
+                    </div>
+                </div>
+
+                <!-- Section 3: Advanced Preferences -->
+                <div class="form-section">
+                    <h2 class="section-title">Advanced Preferences</h2>
+                    <div class="field">
+                        <label for="preferred_tech">Preferred Tech Stack</label>
+                        <input type="text" id="preferred_tech" name="preferred_tech" placeholder="e.g. Python, React, PostgreSQL">
+                    </div>
+                    <div class="grid-2">
+                        <div class="field">
+                            <label for="salary_range">Salary Range</label>
+                            <input type="text" id="salary_range" name="salary_range" placeholder="e.g. $80k - $120k">
+                        </div>
+                        <div class="field">
+                            <label for="availability">Availability</label>
+                            <input type="text" id="availability" name="availability" placeholder="e.g. Immediate">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label for="company_type">Company Type</label>
+                        <select id="company_type" name="company_type">
+                            <option value="Any">Any</option>
+                            <option value="Startup">Startup</option>
+                            <option value="MNC">MNC</option>
+                            <option value="Unicorn">Unicorn</option>
+                        </select>
+                    </div>
+                    <div class="checkbox-field">
+                        <input type="checkbox" id="notifications" name="notifications" checked>
+                        <label for="notifications" class="inline-label">Enable real-time Telegram alerts</label>
+                    </div>
+                </div>
+
+                <!-- Resume -->
+                <div class="form-section">
+                    <h2 class="section-title">Resume Integration</h2>
+                    <div class="field">
+                        <label for="resume">Upload Resume (PDF only)</label>
+                        <div class="upload-area" id="uploadArea">
+                            <input type="file" id="resume" name="resume" accept="application/pdf" required>
+                            <div class="upload-placeholder">
+                                <span id="uploadText">Drag or click to upload</span>
+                                <span id="fileInfo" class="file-info">Optimized for ATS scanning</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" id="submitBtn" class="primary-btn">Finalize Profile & Start Discovery</button>
+            </form>
+
+            <div id="status" class="status"></div>
+        </div>
+    </div>
+    <script>
+        window.CONFIG = { API_KEY: "{{API_KEY}}" };
+    </script>
+    <script src="/assets/script.js"></script>
+</body>
+</html>

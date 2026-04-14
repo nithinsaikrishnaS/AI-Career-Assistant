@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+.env.local
+
+# Project Specific Data (Requirement: Privacy & Reset Safety)
+data/*.db
+data/*.db-wal
+data/*.db-shm
+data/*.json
+data/*.webp
+data/*.png
+!data/.gitkeep
+
+# Scraper Caches & Logs
+*.log
+scraper_health.json
+discovery_audit.json
+*discovery.json
+
+# IDEs
+.vscode/
+.idea/
+.DS_Store
+
+# Static Assets (Build artifacts if any)
+node_modules/

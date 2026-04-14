@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+requests
+urllib3<2.0
+beautifulsoup4
+pypdf
+spacy
+google-generativeai
+python-multipart
+apscheduler
+importlib-metadata
+playwright
+playwright
