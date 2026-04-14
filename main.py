@@ -444,4 +444,7 @@ async def test_telegram():
     return JSONResponse(status_code=500, content={"status": "error", "message": "Telegram delivery failed"})
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=False)
+    # Render requires dynamic port binding (Requirement: Phase 1.4)
+    # Defaulting to 10000 as per deployment plan
+    port = int(os.environ.get("PORT", 10000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)
