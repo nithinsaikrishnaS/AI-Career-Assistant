@@ -26,6 +26,9 @@ from pydantic import validator
 
 logger = get_logger("MainAPI")
 
+# 10/10 Deployment Trace: Version ID for production status
+VERSION = "v1.0.2-onboarding-bypass"
+
 # 10/10 Hardening: Mutex for background re-scoring to prevent DB contention
 RECALCULATE_LOCK = False
 
@@ -453,6 +456,7 @@ async def health_check():
     
     return {
         "status": "healthy",
+        "version": VERSION,
         "timestamp": time.time(),
         "metrics": state
     }
