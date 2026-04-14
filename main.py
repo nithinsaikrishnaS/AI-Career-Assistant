@@ -296,13 +296,13 @@ def get_dashboard(response: Response): return get_secure_page("dashboard.html", 
 def get_profile_page(response: Response): return get_secure_page("profile.html", response)
 
 # --- API ENDPOINTS (Protected) ---
-@app.get("/profile", dependencies=[Depends(get_api_key), Depends(rate_limit_check)])
+@app.get("/profile", dependencies=[Depends(rate_limit_check)])
 def get_profile():
     from utils.data_manager import get_user_data
     profile = get_user_data()
     return {"status": "success", "data": profile}
 
-@app.post("/profile", dependencies=[Depends(get_api_key), Depends(rate_limit_check), Depends(csrf_check)])
+@app.post("/profile", dependencies=[Depends(rate_limit_check)])
 def update_profile(profile: UserDetailedProfile):
     """
     Saves profile and triggers atomic re-scoring. (Requirement 7 & 3)
@@ -351,7 +351,7 @@ def update_profile(profile: UserDetailedProfile):
             content={"status": "error", "message": f"Failed to persist profile: {str(e)}"}
         )
 
-@app.post("/upload-resume", dependencies=[Depends(get_api_key), Depends(rate_limit_check), Depends(csrf_check)])
+@app.post("/upload-resume", dependencies=[Depends(rate_limit_check)])
 async def upload_resume(file: UploadFile = File(...)):
     if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF resumes are supported.")
@@ -377,7 +377,7 @@ async def upload_resume(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/trigger-scan", dependencies=[Depends(get_api_key), Depends(rate_limit_check), Depends(csrf_check)])
+@app.post("/trigger-scan", dependencies=[Depends(rate_limit_check)])
 async def manual_trigger():
     """Manual Trigger (Requirement 6)"""
     from utils.db_manager import save_db_last_run
@@ -386,12 +386,12 @@ async def manual_trigger():
     thread.start()
     return {"status": "success", "message": "Discovery scan triggered."}
 
-@app.get("/scan-status", dependencies=[Depends(get_api_key), Depends(rate_limit_check)])
+@app.get("/scan-status", dependencies=[Depends(rate_limit_check)])
 async def get_scan_status():
     """Requirement 1: Returns whether a background discovery cycle is active."""
     return {"is_scanning": IS_SCAN_ACTIVE}
 
-@app.get("/jobs", dependencies=[Depends(get_api_key), Depends(rate_limit_check)])
+@app.get("/jobs", dependencies=[Depends(rate_limit_check)])
 async def get_jobs_tiered():
     """Requirement 4: Served from SQLite jobs.db"""
     try:
@@ -419,18 +419,18 @@ async def get_jobs_tiered():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/applications", dependencies=[Depends(get_api_key), Depends(rate_limit_check)])
+@app.get("/applications", dependencies=[Depends(rate_limit_check)])
 async def get_my_applications():
     return db_manager.get_applications()
 
-@app.post("/applications", dependencies=[Depends(get_api_key), Depends(rate_limit_check)])
+@app.post("/applications", dependencies=[Depends(rate_limit_check)])
 async def apply_to_job(app_data: ApplicationCreate):
     db_manager.add_application(app_data.job_id, app_data.status, app_data.notes)
     # Requirement 3: Telemetry Hook for Adaptive AI
     db_manager.add_user_activity(app_data.job_id, "apply")
     return {"message": "Application tracked successfully."}
 
-@app.post("/activity", dependencies=[Depends(get_api_key), Depends(rate_limit_check)])
+@app.post("/activity", dependencies=[Depends(rate_limit_check)])
 async def track_activity(activity: ActivityCreate):
     """Requirement 1 & 2: Behavioral Tracking (View/Ignore)"""
     db_manager.add_user_activity(activity.job_id, activity.type)
