@@ -189,6 +189,7 @@
             };
 
             const filterJobs = (jobs) => {
+                if (!jobs || !Array.isArray(jobs)) return [];
                 if (activeFilter === 'all') return jobs;
                 return jobs.filter(j => getFilterCategory(j.source) === activeFilter);
             };
@@ -210,15 +211,22 @@
                     const res = await fetch(`/jobs?t=${Date.now()}`, { credentials: 'include' });
                     const json = await res.json();
                     
+                    // Safety: Ensure we always have arrays
+                    const safeData = {
+                        recommended_jobs: json.recommended_jobs || [],
+                        other_jobs: json.other_jobs || [],
+                        metrics: json.metrics || {}
+                    };
+                    
                     if (json.is_rescoring || json.is_scanning || healthData.metrics.system_status !== 'Idle') {
                         setScanning(true);
                         setTimeout(fetchData, 3000);
                     } else {
                         setScanning(false);
                     }
-                    setData(json);
+                    setData(safeData);
                 } catch (err) {
-                    console.error(err);
+                    console.error("Fetch Data Error:", err);
                     setIsLive(false);
                 } finally {
                     setLoading(false);
@@ -359,15 +367,15 @@
                         <div className="flex items-center gap-4 mb-10">
                             <h2 className="text-3xl font-black italic tracking-tighter">🔥 Recommended for You</h2>
                             <div className="h-[2px] flex-1 bg-gray-100"></div>
-                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{data.recommended_jobs.length} Results</span>
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{(data?.recommended_jobs || []).length} Results</span>
                         </div>
-                        {filterJobs(data.recommended_jobs).length === 0 ? (
+                        {filterJobs(data?.recommended_jobs).length === 0 ? (
                             <div className="bg-gray-50 border border-gray-100 rounded-3xl p-16 text-center italic text-gray-400">
                                 {activeFilter === 'all' ? "No high-match roles found in the latest scan." : `No recommended roles matching '${activeFilter}' category.`}
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                                {filterJobs(data.recommended_jobs).map((job, index) => (
+                                {filterJobs(data?.recommended_jobs).map((job, index) => (
                                     <JobCard key={index} job={job} isRecommended={true} />
                                 ))}
                             </div>
@@ -379,14 +387,14 @@
                         <div className="flex items-center gap-4 mb-10">
                             <h2 className="text-3xl font-black italic tracking-tighter text-gray-300">📌 Other Opportunities</h2>
                             <div className="h-[2px] flex-1 bg-gray-50"></div>
-                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{data.other_jobs.length} Results</span>
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{(data?.other_jobs || []).length} Results</span>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 opacity-70 hover:opacity-100 transition-opacity">
-                            {filterJobs(data.other_jobs).map((job, index) => (
+                            {filterJobs(data?.other_jobs).map((job, index) => (
                                 <JobCard key={index} job={job} isRecommended={false} />
                             ))}
                         </div>
-                        {filterJobs(data.other_jobs).length === 0 && (
+                        {filterJobs(data?.other_jobs).length === 0 && (
                             <div className="bg-gray-50 border border-gray-100 rounded-3xl p-16 text-center italic text-gray-400">
                                 No additional roles found in this category.
                             </div>
